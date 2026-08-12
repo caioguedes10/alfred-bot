@@ -1,3 +1,6 @@
 flask>=3.0
 pydantic>=2.7
 supabase>=2.5
+todoist-api-python>=3.0.0
+apscheduler>=3.10.4
+requests>=2.31.0

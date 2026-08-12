@@ -24,7 +24,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # --- CÉREBRO: CONFIGURAÇÃO GEMINI ---
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    # Define quem é o Alfred e quem é você
     system_instruction = (
         "Você é Alfred, o assistente pessoal do Caio. O Caio é estudante de "
         "Ciências Econômicas na UNICAMP e atua com Operações e Processos Fiscais na WWT. "
@@ -42,11 +41,7 @@ else:
 
 # --- CLIENTES ---
 todoist_api = TodoistAPI(TODOIST_API_KEY) if TODOIST_API_KEY else None
-
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase: Client | None = create_client(SUPABASE_URL, SUPABASE_KEY)
-else:
-    supabase = None
+supabase: Client | None = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 def send_telegram_msg(text: str) -> None:
     if not TELEGRAM_TOKEN or not CHAT_ID:
@@ -94,7 +89,6 @@ def webhook() -> Tuple[Dict[str, Any], int]:
     if not text:
         return jsonify({"status": "ok"}), 200
 
-    # --- PROCESSAMENTO COM IA ---
     if model:
         try:
             resposta_ia = model.generate_content(text).text
@@ -102,7 +96,7 @@ def webhook() -> Tuple[Dict[str, Any], int]:
             logging.error(f"Erro Gemini: {e}")
             resposta_ia = "Falha de conexão com os servidores neurais, senhor."
     else:
-        resposta_ia = "API do Gemini ausente. Configure a GEMINI_API_KEY no Render."
+        resposta_ia = "API do Gemini ausente."
 
     send_telegram_msg(resposta_ia)
     return jsonify({"status": "ok"}), 200

@@ -55,12 +55,12 @@ def telegram_webhook() -> tuple[Any, int]:
     """
 
     try:
-        # FIX: Downgrade para modelo estável e liberado pela API
-        response = ai_client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt,
+        # Migrado para a nova Interactions API usando o Gemini 3.6 Flash
+        response = ai_client.interactions.create(
+            model="gemini-3.6-flash",
+            input=prompt,
         )
-        reply_text: str = response.text
+        reply_text: str = response.output_text
         salvar_no_banco("geral", {"texto_original": text, "resposta_alfred": reply_text})
     except Exception as e:
         reply_text = f"Erro no processamento: {str(e)}"

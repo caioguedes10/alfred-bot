@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 import requests
 from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -64,25 +64,44 @@ def webhook() -> Tuple[Dict[str, Any], int]:
     payload = request.json
     if not payload or "message" not in payload:
         return jsonify({"status": "ignored"}), 200
-
+    
     msg_data = payload.get("message", {})
     chat_id_in = str(msg_data.get("chat", {}).get("id", ""))
     text = msg_data.get("text", "").strip()
-
+    
     if chat_id_in != CHAT_ID:
         return jsonify({"status": "unauthorized"}), 403
-
     if not text:
         return jsonify({"status": "ok"}), 200
 
+    # 1. Resgate (RAG) — busca as últimas 10 mensagens
+    history_messages: List[Dict[str, str]] = []
+    if supabase:
+        try:
+            result = (
+                supabase.table("chat_history")
+                .select("role, content")
+                .order("created_at", desc=True)
+                .limit(10)
+                .execute()
+            )
+            if result.data:
+                history_messages = list(reversed(result.data))
+        except Exception as e:
+            logging.error(f"Erro ao resgatar histórico no Supabase: {e}")
+            history_messages = []
+
+    # 2. Montagem do array messages
+    messages: List[Dict[str, str]] = [{"role": "system", "content": system_instruction}]
+    messages.extend({"role": m["role"], "content": m["content"]} for m in history_messages)
+    messages.append({"role": "user", "content": text})
+
+    # Chamada LLM (Groq)
     if client:
         try:
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": text}
-                ],
+                messages=messages,
                 temperature=0.7,
             )
             resposta_ia = completion.choices[0].message.content
@@ -91,6 +110,18 @@ def webhook() -> Tuple[Dict[str, Any], int]:
             resposta_ia = f"Erro técnico: {str(e)}"
     else:
         resposta_ia = "API da Groq ausente."
+
+    # 3. Persistência — grava no banco
+    if supabase and resposta_ia:
+        try:
+            supabase.table("chat_history").insert(
+                [
+                    {"role": "user", "content": text},
+                    {"role": "assistant", "content": resposta_ia},
+                ]
+            ).execute()
+        except Exception as e:
+            logging.error(f"Erro ao persistir histórico no Supabase: {e}")
 
     send_telegram_msg(resposta_ia)
     return jsonify({"status": "ok"}), 200

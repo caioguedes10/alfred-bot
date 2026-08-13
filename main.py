@@ -1,7 +1,6 @@
 import os
 import logging
 from typing import Any, Dict, Tuple
-
 import requests
 from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -84,10 +83,9 @@ def webhook() -> Tuple[Dict[str, Any], int]:
 
     if client:
         try:
-            # Prompt unificado para evitar qualquer rejeição de parâmetros do SDK novo
             prompt_completo = f"{system_instruction}\n\nMensagem do Caio: {text}"
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=prompt_completo
             )
             resposta_ia = response.text

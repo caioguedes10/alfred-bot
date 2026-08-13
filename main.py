@@ -8,11 +8,9 @@ from todoist_api_python.api import TodoistAPI
 from supabase import create_client, Client
 from google import genai
 
-# --- SETUP E LOGS ---
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 app = Flask(__name__)
 
-# --- VARIÁVEIS DE AMBIENTE ---
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 CHAT_ID = os.getenv("CHAT_ID", "")
 TODOIST_API_KEY = os.getenv("TODOIST_API_KEY", "")
@@ -20,7 +18,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-# --- CÉREBRO: CONFIGURAÇÃO GEMINI ---
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 system_instruction = (
     "Você é Alfred, o assistente pessoal do Caio. O Caio é estudante de "
@@ -31,7 +28,6 @@ system_instruction = (
     "Responda formatado para leitura rápida em tela de celular."
 )
 
-# --- CLIENTES ---
 todoist_api = TodoistAPI(TODOIST_API_KEY) if TODOIST_API_KEY else None
 supabase: Client | None = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
@@ -55,12 +51,10 @@ def job_cobranca() -> None:
     except Exception as e:
         logging.error(f"Erro Todoist: {e}")
 
-# --- SCHEDULER ---
 scheduler = BackgroundScheduler()
 scheduler.add_job(job_cobranca, "cron", hour=11, minute=0)
 scheduler.start()
 
-# --- ROTAS (WEBHOOKS) ---
 @app.route("/", methods=["GET"])
 def home() -> str:
     return "Alfred is online."
@@ -91,7 +85,7 @@ def webhook() -> Tuple[Dict[str, Any], int]:
             resposta_ia = response.text
         except Exception as e:
             logging.error(f"Erro Gemini detalhado: {e}")
-            resposta_ia = "Falha de conexão com os servidores neurais, senhor."
+            resposta_ia = f"Erro técnico: {str(e)}"
     else:
         resposta_ia = "API do Gemini ausente."
 

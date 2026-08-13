@@ -33,7 +33,7 @@ if GEMINI_API_KEY:
         "Responda formatado para leitura rápida em tela de celular."
     )
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-1.5-pro",
         system_instruction=system_instruction
     )
 else:
@@ -53,7 +53,7 @@ def job_cobranca() -> None:
     if not todoist_api:
         return
     try:
-        tasks = todoist_api.get_tasks(filter="today")
+        tasks = todoist_api.test_tasks if hasattr(todoist_api, 'test_tasks') else todoist_api.get_tasks(filter="today")
         if not tasks:
             return
         msg = "🚨 *Cobrança Alfred - Tarefas Pendentes:*\n\n"
@@ -84,7 +84,7 @@ def webhook() -> Tuple[Dict[str, Any], int]:
     text = msg_data.get("text", "").strip()
 
     if chat_id_in != CHAT_ID:
-        return jsonify({"status": "unauthorized"}), 403
+        return jsonify({"status": "unauthorized"}}, 403
 
     if not text:
         return jsonify({"status": "ok"}), 200

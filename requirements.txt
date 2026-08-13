@@ -1,7 +1,7 @@
-flask
-apscheduler
-requests
-todoist-api-python
-supabase
-groq
-gunicorn
+Flask==3.0.3
+requests==2.32.3
+APScheduler==3.10.4
+todoist-api-python==2.1.7
+supabase==2.7.4
+openai==1.51.0
+gunicorn==22.0.0

@@ -21,7 +21,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-# --- CÉREBRO: CONFIGURAÇÃO GEMINI (SDK MODERNO) ---
+# --- CÉREBRO: CONFIGURAÇÃO GEMINI ---
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 system_instruction = (
     "Você é Alfred, o assistente pessoal do Caio. O Caio é estudante de "
@@ -84,14 +84,15 @@ def webhook() -> Tuple[Dict[str, Any], int]:
 
     if client:
         try:
+            # Prompt unificado para evitar qualquer rejeição de parâmetros do SDK novo
+            prompt_completo = f"{system_instruction}\n\nMensagem do Caio: {text}"
             response = client.models.generate_content(
                 model="gemini-1.5-flash",
-                contents=text,
-                config={"system_instruction": system_instruction}
+                contents=prompt_completo
             )
             resposta_ia = response.text
         except Exception as e:
-            logging.error(f"Erro Gemini: {e}")
+            logging.error(f"Erro Gemini detalhado: {e}")
             resposta_ia = "Falha de conexão com os servidores neurais, senhor."
     else:
         resposta_ia = "API do Gemini ausente."

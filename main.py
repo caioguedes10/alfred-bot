@@ -79,7 +79,7 @@ def webhook() -> Tuple[Dict[str, Any], int]:
         try:
             prompt_completo = f"{system_instruction}\n\nMensagem do Caio: {text}"
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-1.5-flash",
                 contents=prompt_completo
             )
             resposta_ia = response.text

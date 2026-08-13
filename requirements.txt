@@ -4,3 +4,4 @@ requests
 todoist-api-python
 supabase
 groq
+gunicorn

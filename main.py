@@ -28,7 +28,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 # --- Constantes -----------------------------------------------------------
 TELEGRAM_API_BASE = "https://api.telegram.org"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-VISION_MODEL = "google/gemini-1.5-flash:free"s
+VISION_MODEL = "google/gemini-1.5-flash:free"
 
 # --- Clients (setup único no bootstrap) ------------------------------------
 llm_client: Optional[OpenAI] = (

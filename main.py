@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from todoist_api_python.api import TodoistAPI
 from supabase import create_client, Client
-from google import genai
+from groq import Groq
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 app = Flask(__name__)
@@ -16,9 +16,9 @@ CHAT_ID = os.getenv("CHAT_ID", "")
 TODOIST_API_KEY = os.getenv("TODOIST_API_KEY", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 system_instruction = (
     "Você é Alfred, o assistente pessoal do Caio. O Caio é estudante de "
     "Ciências Econômicas na UNICAMP e atua com Operações e Processos Fiscais na WWT. "
@@ -77,17 +77,20 @@ def webhook() -> Tuple[Dict[str, Any], int]:
 
     if client:
         try:
-            prompt_completo = f"{system_instruction}\n\nMensagem do Caio: {text}"
-            response = client.models.generate_content(
-                model="gemini-1.5-flash",
-                contents=prompt_completo
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": text}
+                ],
+                temperature=0.7,
             )
-            resposta_ia = response.text
+            resposta_ia = completion.choices[0].message.content
         except Exception as e:
-            logging.error(f"Erro Gemini detalhado: {e}")
+            logging.error(f"Erro Groq detalhado: {e}")
             resposta_ia = f"Erro técnico: {str(e)}"
     else:
-        resposta_ia = "API do Gemini ausente."
+        resposta_ia = "API da Groq ausente."
 
     send_telegram_msg(resposta_ia)
     return jsonify({"status": "ok"}), 200
